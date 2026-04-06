@@ -18,5 +18,8 @@ uv.lock
 # Claude
 .claude
 
-# Pytest
+# pytest
 .pytest_cache/
+
+# Ruff
+.ruff_cache/
