@@ -1,0 +1,23 @@
+[project]
+name = "whisper-desk"
+version = "0.1.0"
+description = "Whisperローカルモデルによる音声文字起こしデスクトップアプリ"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flet>=0.25",
+    "openai-whisper",
+    "sounddevice",
+    "soundfile",
+    "numpy",
+]
+
+[project.scripts]
+whisper-desk = "app:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.15.9",
+    "ty>=0.0.28",
+]
