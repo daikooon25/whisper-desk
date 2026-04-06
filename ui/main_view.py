@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-import tempfile
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -30,6 +30,7 @@ class WhisperApp:
 
         self.model_name = "base"
         self.audio_path: str | None = None
+        self._is_recording_source = False
 
         self.recorder = Recorder()
         self.transcriber = Transcriber()
@@ -165,7 +166,7 @@ class WhisperApp:
         )
         self.file_path_field = ft.TextField(
             label="ファイルパスを貼り付け / 入力してEnter",
-            hint_text="C:\\...\\audio.mp3",
+            hint_text="C:\\...\\audio.mp3" if sys.platform == "win32" else "/path/to/audio.mp3",
             on_submit=self._on_file_path_submit,
             on_change=self._on_file_path_change,
             expand=True,
@@ -354,6 +355,7 @@ class WhisperApp:
         p = Path(path_str)
         if p.is_file():
             self.audio_path = str(p)
+            self._is_recording_source = False
             self.file_path_field.value = str(p)
             self.selected_file_text.value = f"{p.name} (OK)"
             self.selected_file_text.color = ft.Colors.GREEN_700
@@ -440,6 +442,7 @@ class WhisperApp:
 
         if audio_path:
             self.audio_path = audio_path
+            self._is_recording_source = True
             duration = self.recorder.duration or 0
             mins, secs = divmod(int(duration), 60)
             self.record_status.value = f"録音完了 ({mins:02d}:{secs:02d})"
@@ -497,10 +500,9 @@ class WhisperApp:
 
             # 履歴に保存
             source_path = Path(audio_path)
-            is_recording = str(source_path.parent) == tempfile.gettempdir()
             self.history_db.add(
-                source_type="recording" if is_recording else "file",
-                source_name=None if is_recording else source_path.name,
+                source_type="recording" if self._is_recording_source else "file",
+                source_name=None if self._is_recording_source else source_path.name,
                 model=self.model_name,
                 language=lang,
                 detected_language=result.detected_language,
@@ -509,7 +511,7 @@ class WhisperApp:
             )
 
             # 録音の一時ファイルを削除
-            if is_recording:
+            if self._is_recording_source:
                 try:
                     source_path.unlink()
                     logger.info("一時ファイル削除: %s", source_path)
@@ -533,11 +535,9 @@ class WhisperApp:
 
     def _default_save_name(self) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        if self.audio_path:
-            source = Path(self.audio_path)
-            if not source.name.startswith("tmp"):
-                stem = source.stem
-                return f"{stem}_{timestamp}.txt"
+        if self.audio_path and not self._is_recording_source:
+            stem = Path(self.audio_path).stem
+            return f"{stem}_{timestamp}.txt"
         return f"transcription_{timestamp}.txt"
 
     async def _on_save(self, _):
