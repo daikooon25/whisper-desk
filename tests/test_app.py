@@ -3,10 +3,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
-from app import LANGUAGES, MODELS, SAMPLE_RATE, is_model_downloaded, _section_card
-
+from app import LANGUAGES, MODELS, SAMPLE_RATE, _section_card, is_model_downloaded
 
 # ── 定数 ─────────────────────────────────────────────
 

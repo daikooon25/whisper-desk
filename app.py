@@ -474,7 +474,9 @@ class WhisperApp:
                                     ft.Button(
                                         "結果を表示",
                                         icon=ft.Icons.OPEN_IN_NEW,
-                                        on_click=lambda _, rid=row["id"]: self._show_history_detail(rid),
+                                        on_click=lambda _, rid=row["id"]: self._show_history_detail(
+                            rid
+                        ),
                                     ),
                                     ft.IconButton(
                                         icon=ft.Icons.DELETE_OUTLINE,
@@ -619,13 +621,25 @@ class WhisperApp:
             if self.recording:
                 self.audio_data.append(indata.copy())
 
-        self.stream = sd.InputStream(
-            samplerate=SAMPLE_RATE,
-            channels=1,
-            dtype="float32",
-            callback=callback,
-        )
-        self.stream.start()
+        try:
+            self.stream = sd.InputStream(
+                samplerate=SAMPLE_RATE,
+                channels=1,
+                dtype="float32",
+                callback=callback,
+            )
+            self.stream.start()
+        except (sd.PortAudioError, OSError) as e:
+            self.recording = False
+            self.record_button.content = "録音開始"
+            self.record_button.icon = ft.Icons.MIC
+            self.record_button.bgcolor = RECORD_COLOR
+            self.record_status.value = "マイクが利用できません"
+            self.record_status.color = ft.Colors.RED_400
+            self.record_timer.value = ""
+            logger.error("マイク初期化エラー: %s", e)
+            self.page.update()
+            return
 
         async def update_timer():
             while self.recording:
@@ -757,6 +771,14 @@ class WhisperApp:
                 duration_sec=round(audio_duration, 1) if audio_duration else None,
                 text=text,
             )
+
+            # 録音の一時ファイルを削除
+            if is_recording:
+                try:
+                    source_path.unlink()
+                    logger.info("一時ファイル削除: %s", source_path)
+                except OSError as e:
+                    logger.warning("一時ファイル削除失敗: %s", e)
 
         except Exception as e:
             self.status_text.value = f"エラー: {e}"
