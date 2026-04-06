@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Flet
+.flet/
+
+# uv
+uv.lock
+
+# Claude
+.claude
+
+# Pytest
+.pytest_cache/
