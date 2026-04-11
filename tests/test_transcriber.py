@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from transcriber import Transcriber, TranscriptionResult
+from whisper_desk.transcriber import Transcriber, TranscriptionResult
 
 
 @pytest.fixture()
@@ -20,7 +20,7 @@ class TestTranscriberInit:
 
 class TestEnsureModel:
     def test_loads_model(self, transcriber: Transcriber):
-        with patch("transcriber.whisper.load_model", return_value=MagicMock()) as mock_load:
+        with patch("whisper_desk.transcriber.whisper.load_model", return_value=MagicMock()) as mock_load:
             asyncio.get_event_loop().run_until_complete(
                 transcriber.ensure_model("base")
             )
@@ -29,7 +29,7 @@ class TestEnsureModel:
 
     def test_skips_if_same_model(self, transcriber: Transcriber):
         mock_model = MagicMock()
-        with patch("transcriber.whisper.load_model", return_value=mock_model) as mock_load:
+        with patch("whisper_desk.transcriber.whisper.load_model", return_value=mock_model) as mock_load:
             asyncio.get_event_loop().run_until_complete(
                 transcriber.ensure_model("base")
             )
@@ -39,7 +39,7 @@ class TestEnsureModel:
             assert mock_load.call_count == 1
 
     def test_reloads_on_different_model(self, transcriber: Transcriber):
-        with patch("transcriber.whisper.load_model", return_value=MagicMock()) as mock_load:
+        with patch("whisper_desk.transcriber.whisper.load_model", return_value=MagicMock()) as mock_load:
             asyncio.get_event_loop().run_until_complete(
                 transcriber.ensure_model("base")
             )
@@ -65,7 +65,7 @@ class TestTranscribe:
         transcriber._model = mock_model
         transcriber._loaded_model_name = "base"
 
-        with patch("transcriber.sf.info") as mock_info:
+        with patch("whisper_desk.transcriber.sf.info") as mock_info:
             mock_info.return_value.duration = 5.0
             result = asyncio.get_event_loop().run_until_complete(
                 transcriber.transcribe("test.wav", "en")
@@ -83,7 +83,7 @@ class TestTranscribe:
         transcriber._model = mock_model
         transcriber._loaded_model_name = "base"
 
-        with patch("transcriber.sf.info") as mock_info:
+        with patch("whisper_desk.transcriber.sf.info") as mock_info:
             mock_info.return_value.duration = 1.0
             asyncio.get_event_loop().run_until_complete(
                 transcriber.transcribe("test.wav", "auto")
@@ -101,7 +101,7 @@ class TestTranscribe:
         transcriber._model = mock_model
         transcriber._loaded_model_name = "base"
 
-        with patch("transcriber.sf.info") as mock_info:
+        with patch("whisper_desk.transcriber.sf.info") as mock_info:
             mock_info.return_value.duration = 1.0
             result = asyncio.get_event_loop().run_until_complete(
                 transcriber.transcribe("test.wav", "ja", diarize=True)
@@ -123,7 +123,7 @@ class TestTranscribe:
         transcriber._model = mock_model
         transcriber._loaded_model_name = "base"
 
-        with patch("transcriber.sf.info") as mock_info:
+        with patch("whisper_desk.transcriber.sf.info") as mock_info:
             mock_info.return_value.duration = 1.0
             result = asyncio.get_event_loop().run_until_complete(
                 transcriber.transcribe("test.wav", "ja")

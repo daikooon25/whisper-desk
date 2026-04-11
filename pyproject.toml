@@ -1,3 +1,10 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/whisper_desk"]
+
 [project]
 name = "whisper-desk"
 version = "0.1.0"
@@ -19,7 +26,7 @@ diarize = [
 ]
 
 [project.scripts]
-whisper-desk = "app:main"
+whisper-desk = "whisper_desk.app:main"
 
 [dependency-groups]
 dev = [

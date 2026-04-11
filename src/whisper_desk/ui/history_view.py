@@ -5,8 +5,8 @@ from collections.abc import Callable
 
 import flet as ft
 
-from history import HistoryDB
-from ui.theme import ACCENT
+from ..history import HistoryDB
+from .theme import ACCENT
 
 logger = logging.getLogger(__name__)
 

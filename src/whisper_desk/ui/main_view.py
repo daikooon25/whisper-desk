@@ -8,14 +8,14 @@ from pathlib import Path
 
 import flet as ft
 
-from config import LANGUAGES, MODELS, is_model_downloaded, load_hf_token, save_hf_token
-from diarizer import PYANNOTE_AVAILABLE, Diarizer, format_diarized_text
-from history import HistoryDB
-from recorder import Recorder, RecorderError
-from transcriber import Transcriber
-from ui.components import section_card
-from ui.history_view import HistoryView
-from ui.theme import ACCENT, RECORD_COLOR
+from ..config import LANGUAGES, MODELS, is_model_downloaded, load_hf_token, save_hf_token
+from ..diarizer import PYANNOTE_AVAILABLE, Diarizer, format_diarized_text
+from ..history import HistoryDB
+from ..recorder import Recorder, RecorderError
+from ..transcriber import Transcriber
+from .components import section_card
+from .history_view import HistoryView
+from .theme import ACCENT, RECORD_COLOR
 
 logger = logging.getLogger(__name__)
 

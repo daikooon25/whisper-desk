@@ -8,7 +8,7 @@ import numpy as np
 import sounddevice as sd
 import soundfile as sf
 
-from config import SAMPLE_RATE
+from .config import SAMPLE_RATE
 
 logger = logging.getLogger(__name__)
 

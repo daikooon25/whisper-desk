@@ -2,7 +2,7 @@
 
 import flet as ft
 
-from ui.components import section_card
+from whisper_desk.ui.components import section_card
 
 
 class TestSectionCard:

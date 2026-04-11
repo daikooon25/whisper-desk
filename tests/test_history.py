@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from history import HistoryDB
+from whisper_desk.history import HistoryDB
 
 
 @pytest.fixture()

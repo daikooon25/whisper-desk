@@ -2,7 +2,7 @@
 
 import flet as ft
 
-from ui.theme import ACCENT
+from .theme import ACCENT
 
 
 def section_card(title: str, icon, controls: list, expand=False) -> ft.Card:

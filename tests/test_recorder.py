@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from recorder import Recorder, RecorderError
+from whisper_desk.recorder import Recorder, RecorderError
 
 
 class TestRecorderInit:
@@ -22,7 +22,7 @@ class TestRecorderInit:
 class TestRecorderStart:
     def test_start_sets_recording(self):
         r = Recorder()
-        with patch("recorder.sd.InputStream") as mock_stream:
+        with patch("whisper_desk.recorder.sd.InputStream") as mock_stream:
             mock_stream.return_value = MagicMock()
             r.start()
             assert r.recording is True
@@ -30,7 +30,7 @@ class TestRecorderStart:
 
     def test_start_raises_on_mic_error(self):
         r = Recorder()
-        with patch("recorder.sd.InputStream", side_effect=OSError("no mic")):
+        with patch("whisper_desk.recorder.sd.InputStream", side_effect=OSError("no mic")):
             with pytest.raises(RecorderError, match="マイクが利用できません"):
                 r.start()
             assert r.recording is False

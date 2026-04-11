@@ -3,7 +3,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from config import (
+from whisper_desk.config import (
     LANGUAGES,
     MODELS,
     SAMPLE_RATE,
@@ -39,12 +39,12 @@ class TestConstants:
 
 class TestIsModelDownloaded:
     def test_returns_false_when_not_exists(self, tmp_path: Path):
-        with patch("config.WHISPER_CACHE_DIR", tmp_path):
+        with patch("whisper_desk.config.WHISPER_CACHE_DIR", tmp_path):
             assert is_model_downloaded("base") is False
 
     def test_returns_true_when_exists(self, tmp_path: Path):
         (tmp_path / "base.pt").touch()
-        with patch("config.WHISPER_CACHE_DIR", tmp_path):
+        with patch("whisper_desk.config.WHISPER_CACHE_DIR", tmp_path):
             assert is_model_downloaded("base") is True
 
 
@@ -53,23 +53,23 @@ class TestIsModelDownloaded:
 
 class TestHfToken:
     def test_load_returns_none_when_no_file(self, tmp_path: Path):
-        with patch("config.HF_TOKEN_PATH", tmp_path / "hf_token"):
+        with patch("whisper_desk.config.HF_TOKEN_PATH", tmp_path / "hf_token"):
             assert load_hf_token() is None
 
     def test_save_and_load(self, tmp_path: Path):
         token_path = tmp_path / "hf_token"
-        with patch("config.HF_TOKEN_PATH", token_path):
+        with patch("whisper_desk.config.HF_TOKEN_PATH", token_path):
             save_hf_token("hf_test_token_123")
             assert load_hf_token() == "hf_test_token_123"
 
     def test_load_strips_whitespace(self, tmp_path: Path):
         token_path = tmp_path / "hf_token"
         token_path.write_text("  hf_abc  \n", encoding="utf-8")
-        with patch("config.HF_TOKEN_PATH", token_path):
+        with patch("whisper_desk.config.HF_TOKEN_PATH", token_path):
             assert load_hf_token() == "hf_abc"
 
     def test_load_returns_none_for_empty_file(self, tmp_path: Path):
         token_path = tmp_path / "hf_token"
         token_path.write_text("", encoding="utf-8")
-        with patch("config.HF_TOKEN_PATH", token_path):
+        with patch("whisper_desk.config.HF_TOKEN_PATH", token_path):
             assert load_hf_token() is None

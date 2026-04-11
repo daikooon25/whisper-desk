@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock
 
-from diarizer import DiarizedSegment, _assign_speakers, format_diarized_text
+from whisper_desk.diarizer import DiarizedSegment, _assign_speakers, format_diarized_text
 
 
 def _make_turn(start, end):
