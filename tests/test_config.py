@@ -3,7 +3,14 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from config import LANGUAGES, MODELS, SAMPLE_RATE, is_model_downloaded
+from config import (
+    LANGUAGES,
+    MODELS,
+    SAMPLE_RATE,
+    is_model_downloaded,
+    load_hf_token,
+    save_hf_token,
+)
 
 # ── 定数 ─────────────────────────────────────────────
 
@@ -39,3 +46,30 @@ class TestIsModelDownloaded:
         (tmp_path / "base.pt").touch()
         with patch("config.WHISPER_CACHE_DIR", tmp_path):
             assert is_model_downloaded("base") is True
+
+
+# ── HuggingFace トークン ─────────────────────────────
+
+
+class TestHfToken:
+    def test_load_returns_none_when_no_file(self, tmp_path: Path):
+        with patch("config.HF_TOKEN_PATH", tmp_path / "hf_token"):
+            assert load_hf_token() is None
+
+    def test_save_and_load(self, tmp_path: Path):
+        token_path = tmp_path / "hf_token"
+        with patch("config.HF_TOKEN_PATH", token_path):
+            save_hf_token("hf_test_token_123")
+            assert load_hf_token() == "hf_test_token_123"
+
+    def test_load_strips_whitespace(self, tmp_path: Path):
+        token_path = tmp_path / "hf_token"
+        token_path.write_text("  hf_abc  \n", encoding="utf-8")
+        with patch("config.HF_TOKEN_PATH", token_path):
+            assert load_hf_token() == "hf_abc"
+
+    def test_load_returns_none_for_empty_file(self, tmp_path: Path):
+        token_path = tmp_path / "hf_token"
+        token_path.write_text("", encoding="utf-8")
+        with patch("config.HF_TOKEN_PATH", token_path):
+            assert load_hf_token() is None

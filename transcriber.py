@@ -17,6 +17,7 @@ class TranscriptionResult:
     detected_language: str
     duration_sec: float | None
     elapsed_sec: float
+    segments: list[dict] | None = None
 
 
 class Transcriber:
@@ -38,7 +39,9 @@ class Transcriber:
         self._loaded_model_name = model_name
         logger.info("モデル読込完了: %s (%.1f秒)", model_name, time.time() - t0)
 
-    async def transcribe(self, audio_path: str, language: str = "auto") -> TranscriptionResult:
+    async def transcribe(
+        self, audio_path: str, language: str = "auto", *, diarize: bool = False
+    ) -> TranscriptionResult:
         """音声ファイルを文字起こしする。事前に ensure_model() を呼ぶこと。"""
         if self._model is None:
             raise RuntimeError(
@@ -51,6 +54,8 @@ class Transcriber:
         transcribe_opts = {}
         if language != "auto":
             transcribe_opts["language"] = language
+        if diarize:
+            transcribe_opts["word_timestamps"] = True
 
         result = await asyncio.to_thread(
             self._model.transcribe, audio_path, **transcribe_opts
@@ -74,9 +79,12 @@ class Transcriber:
             len(text),
         )
 
+        segments = result.get("segments") if diarize else None
+
         return TranscriptionResult(
             text=text,
             detected_language=detected_lang,
             duration_sec=duration_sec,
             elapsed_sec=elapsed,
+            segments=segments,
         )

@@ -90,3 +90,43 @@ class TestTranscribe:
             )
 
         mock_model.transcribe.assert_called_once_with("test.wav")
+
+    def test_diarize_enables_word_timestamps(self, transcriber: Transcriber):
+        mock_model = MagicMock()
+        mock_model.transcribe.return_value = {
+            "text": "テスト",
+            "language": "ja",
+            "segments": [{"start": 0.0, "end": 1.0, "text": "テスト"}],
+        }
+        transcriber._model = mock_model
+        transcriber._loaded_model_name = "base"
+
+        with patch("transcriber.sf.info") as mock_info:
+            mock_info.return_value.duration = 1.0
+            result = asyncio.get_event_loop().run_until_complete(
+                transcriber.transcribe("test.wav", "ja", diarize=True)
+            )
+
+        mock_model.transcribe.assert_called_once_with(
+            "test.wav", language="ja", word_timestamps=True
+        )
+        assert result.segments is not None
+        assert len(result.segments) == 1
+
+    def test_diarize_false_no_segments(self, transcriber: Transcriber):
+        mock_model = MagicMock()
+        mock_model.transcribe.return_value = {
+            "text": "テスト",
+            "language": "ja",
+            "segments": [{"start": 0.0, "end": 1.0, "text": "テスト"}],
+        }
+        transcriber._model = mock_model
+        transcriber._loaded_model_name = "base"
+
+        with patch("transcriber.sf.info") as mock_info:
+            mock_info.return_value.duration = 1.0
+            result = asyncio.get_event_loop().run_until_complete(
+                transcriber.transcribe("test.wav", "ja")
+            )
+
+        assert result.segments is None

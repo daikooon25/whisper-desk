@@ -8,7 +8,8 @@ from pathlib import Path
 
 import flet as ft
 
-from config import LANGUAGES, MODELS, is_model_downloaded
+from config import LANGUAGES, MODELS, is_model_downloaded, load_hf_token, save_hf_token
+from diarizer import PYANNOTE_AVAILABLE, Diarizer, format_diarized_text
 from history import HistoryDB
 from recorder import Recorder, RecorderError
 from transcriber import Transcriber
@@ -33,6 +34,7 @@ class WhisperApp:
 
         self.recorder = Recorder()
         self.transcriber = Transcriber()
+        self.diarizer = Diarizer()
         self.history_db = HistoryDB()
 
         self._build_ui()
@@ -149,6 +151,35 @@ class WhisperApp:
             ],
         )
 
+        # ── 話者分離設定 ──
+        self.diarize_checkbox = ft.Checkbox(
+            label="話者分離 (Speaker Diarization)",
+            value=False,
+            on_change=self._on_diarize_toggle,
+            disabled=not PYANNOTE_AVAILABLE,
+        )
+        saved_token = load_hf_token() or ""
+        self.hf_token_field = ft.TextField(
+            label="HuggingFace Token",
+            value=saved_token,
+            password=True,
+            can_reveal_password=True,
+            hint_text="hf_...",
+            width=400,
+            visible=False,
+        )
+        diarize_help = ft.Text(
+            "pyannote.audio 未インストール: uv sync --extra diarize",
+            size=12,
+            color=ft.Colors.ORANGE_700,
+            visible=not PYANNOTE_AVAILABLE,
+        )
+        diarize_card = section_card(
+            "話者分離",
+            ft.Icons.PEOPLE,
+            [self.diarize_checkbox, self.hf_token_field, diarize_help],
+        )
+
         # ── サービス登録 ──
         self.clipboard = ft.Clipboard()
         self.file_picker = ft.FilePicker()
@@ -254,6 +285,7 @@ class WhisperApp:
                 [
                     model_card,
                     language_card,
+                    diarize_card,
                     file_card,
                     record_card,
                     ft.Container(
@@ -334,6 +366,12 @@ class WhisperApp:
     def _set_transcribe_enabled(self, enabled: bool):
         self.transcribe_button.disabled = not enabled
         self.transcribe_button.bgcolor = ACCENT if enabled else ft.Colors.GREY_400
+
+    # ── 話者分離 ────────────────────────────────────────
+
+    def _on_diarize_toggle(self, e):
+        self.hf_token_field.visible = self.diarize_checkbox.value
+        self.page.update()
 
     # ── モデル ──────────────────────────────────────────
 
@@ -482,9 +520,34 @@ class WhisperApp:
             self.page.update()
 
             audio_path = self.audio_path
-            result = await self.transcriber.transcribe(audio_path, lang)
+            enable_diarize = self.diarize_checkbox.value
+            result = await self.transcriber.transcribe(
+                audio_path, lang, diarize=enable_diarize
+            )
 
-            self.result_field.value = result.text
+            # 話者分離
+            if enable_diarize and result.segments:
+                hf_token = self.hf_token_field.value or load_hf_token()
+                if not hf_token:
+                    self.status_text.value = "エラー: HuggingFace トークンを入力してください"
+                    self.progress.visible = False
+                    self._set_transcribe_enabled(True)
+                    self.page.update()
+                    return
+                save_hf_token(hf_token)
+
+                self.status_text.value = "話者分離モデルを読み込み中..."
+                self.page.update()
+                await self.diarizer.ensure_pipeline(hf_token)
+
+                self.status_text.value = "話者分離を実行中..."
+                self.page.update()
+                diarized = await self.diarizer.diarize(audio_path, result.segments)
+                display_text = format_diarized_text(diarized)
+            else:
+                display_text = result.text
+
+            self.result_field.value = display_text
             self.status_text.value = (
                 f"完了 (言語: {result.detected_language}, {result.elapsed_sec:.1f}秒)"
             )
@@ -505,7 +568,7 @@ class WhisperApp:
                 language=lang,
                 detected_language=result.detected_language,
                 duration_sec=result.duration_sec,
-                text=result.text,
+                text=display_text,
             )
 
             # 録音の一時ファイルを削除

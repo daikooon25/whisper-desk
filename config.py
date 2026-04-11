@@ -57,3 +57,20 @@ LANGUAGES = {
 # ── 音声 ──────────────────────────────────────────────
 
 SAMPLE_RATE = 16000
+
+# ── HuggingFace トークン ──────────────────────────────
+
+HF_TOKEN_PATH = LOG_DIR / "hf_token"
+
+
+def load_hf_token() -> str | None:
+    """保存済みの HuggingFace トークンを読み込む。未保存なら None。"""
+    if HF_TOKEN_PATH.exists():
+        token = HF_TOKEN_PATH.read_text(encoding="utf-8").strip()
+        return token if token else None
+    return None
+
+
+def save_hf_token(token: str) -> None:
+    """HuggingFace トークンをファイルに保存する。"""
+    HF_TOKEN_PATH.write_text(token.strip(), encoding="utf-8")
